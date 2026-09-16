@@ -4,7 +4,9 @@
 
 
 
-The official Go SDK of [Scrapeless AI](https://scrapeless.com) - a powerful web scraping and browser automation platform that helps you extract data from any website at scale.
+The official Go SDK of [Scrapeless AI](https://scrapeless.com?utm_source=github&utm_medium=referral&utm_campaign=go_sdk_repo) - a powerful web scraping and browser automation platform that helps you extract data from any website at scale.
+
+New to Scrapeless? [Sign up](https://app.scrapeless.com/passport/login?utm_source=github&utm_medium=referral&utm_campaign=go_sdk_repo) and get $5 in free credits.
 
 ## 📑 Table of Contents
 
@@ -21,12 +23,13 @@ The official Go SDK of [Scrapeless AI](https://scrapeless.com) - a powerful web 
 
 ## 🌟 Features
 
-- **Browser Automation**: Supports remote browser sessions.
-- **Web Scraping**: Extracts data from any website through intelligent parsing.
-- **SERP Scraping**: Extracts search engine results with high accuracy.
-- **Proxy Management**: Built-in proxy rotation and geolocation.
-- **Actor System**: Runs custom automation scripts in the cloud.
-- **Storage Solutions**: Provides persistent data storage for your scraping projects.
+- **Browser**: Remote browser session management with configurable anti-detection capabilities (e.g., fingerprint spoofing, CAPTCHA solving) and extensible automation workflows.
+- **Web Unlocker**: web interaction and data extraction with full browser capabilities. Execute JavaScript rendering, simulate user interactions (clicks, scrolls), bypass anti-scraping measures, and export structured data in formats.
+- **Crawl**: Extract data from single pages or traverse entire domains, exporting in formats including Markdown, JSON, HTML, screenshots, and links.
+- **Scraping API**: Direct data extraction APIs for websites (e.g., e-commerce, travel platforms). Retrieve structured product information, pricing, and reviews with pre-built connectors.
+- **Google Search API**: Google SERP data extraction API. Fetch organic results, news, images, and more with customizable parameters and real-time updates.
+- **AI Scraper**: Extract AI chat answers, citations, and brand mentions across supported models.
+- **Proxies**: Geo-targeted proxy network with 195+ countries. Optimize requests for better success rates and regional data access.
 
 ## 📦 Installation
 
@@ -44,13 +47,13 @@ go get -u github.com/scrapeless-ai/sdk-go
 package main
 
 import (
-	scrapeless "github.com/scrapeless-ai/sdk-go/scrapeless/actor"
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
 )
 
 func main() {
-	// Initialize the actor
-	actor := scrapeless.New()
-	defer actor.Close()
+	// Initialize the client (uses SCRAPELESS_API_KEY)
+	client := scrapeless.New(scrapeless.WithBrowser())
+	defer client.Close()
 }
 ```
 
@@ -64,24 +67,22 @@ SCRAPELESS_API_KEY=your-api-key
 
 # Optional - Custom API endpoints
 SCRAPELESS_BASE_API_URL=https://api.scrapeless.com
-SCRAPELESS_ACTOR_API_URL=https://actor.scrapeless.com
-SCRAPELESS_STORAGE_API_URL=https://storage.scrapeless.com
 SCRAPELESS_BROWSER_API_URL=https://browser.scrapeless.com
-SCRAPELESS_CRAWL_API_URL=https://crawl.scrapeless.com
+SCRAPELESS_CRAWL_API_URL=https://api.scrapeless.com
 ```
 
 ## 📖 Usage Examples
 
-### Browser Automation
+### Browser
 
 ```go
 package main
 
 import (
 	"context"
-	scrapeless "github.com/scrapeless-ai/sdk-go/scrapeless/actor"
-	"github.com/scrapeless-ai/sdk-go/scrapeless/browser"
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
 	"github.com/scrapeless-ai/sdk-go/scrapeless/log"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/browser"
 )
 
 func main() {
@@ -99,16 +100,39 @@ func main() {
 }
 ```
 
-### Web Scraping
+### Browser Profile
 
 ```go
 package main
 
 import (
 	"context"
-	scrapeless "github.com/scrapeless-ai/sdk-go/scrapeless/actor"
+	"fmt"
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
+)
+
+func main() {
+	client := scrapeless.New(scrapeless.WithProfile())
+	defer client.Close()
+
+	result, err := client.Profile.CreateProfile(context.Background(), "My Profile")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v\n", result)
+}
+```
+
+### Scraping API
+
+```go
+package main
+
+import (
+	"context"
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
 	"github.com/scrapeless-ai/sdk-go/scrapeless/log"
-	"github.com/scrapeless-ai/sdk-go/scrapeless/scraping"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/scraping"
 )
 
 func main() {
@@ -129,72 +153,39 @@ func main() {
 }
 ```
 
-### SERP Scraping
+### Web Unlocker
+
+Extract data from websites using Web Unlocker (exposed as `client.Universal`).
 
 ```go
 package main
 
 import (
 	"context"
-	scrapeless "github.com/scrapeless-ai/sdk-go/scrapeless/actor"
-	"github.com/scrapeless-ai/sdk-go/scrapeless/deepserp"
-	"github.com/scrapeless-ai/sdk-go/scrapeless/log"
-)
-
-func main() {
-	client := scrapeless.New(scrapeless.WithDeepSerp())
-
-	scrape, err := client.DeepSerp.Scrape(context.Background(), deepserp.DeepserpTaskRequest{
-		Actor: "scraper.google.search",
-		Input: map[string]interface{}{
-			"q": "nike site:www.nike.com",
-		},
-		ProxyCountry: "US",
-	})
-	if err != nil {
-		log.Errorf("scraping create err:%v", err)
-		return
-	}
-	log.Infof("%+v", scrape)
-}
-```
-
-### Actor System
-
-```go
-package main
-
-import (
-	"context"
-	"github.com/scrapeless-ai/sdk-go/internal/remote/actor"
+	"fmt"
 	"github.com/scrapeless-ai/sdk-go/scrapeless"
-	"github.com/scrapeless-ai/sdk-go/scrapeless/log"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/universal"
 )
 
 func main() {
-	client := scrapeless.New(scrapeless.WithActor())
+	client := scrapeless.New(scrapeless.WithUniversal())
 	defer client.Close()
 
-	runId, err := client.Actor.Run(context.Background(), actor.IRunActorData{
-		ActorId: "554bbd68-c787-4900-b8b2-1086369c96e1",
-		Input: map[string]string{
-			"name": "test",
-			"url":  "https://www.google.com",
-		},
-		RunOptions: actor.RunOptions{
-			Version: "v0.0.3",
+	result, err := client.Universal.CreateTask(context.Background(), universal.UniversalTaskRequest{
+		Actor: universal.ScraperUniversal,
+		Input: map[string]any{
+			"url":      "https://example.com",
+			"method":   "GET",
+			"redirect": false,
 		},
 	})
 	if err != nil {
 		panic(err)
 	}
-	runInfo, err := client.Actor.GetRunInfo(context.Background(), runId)
-	if err != nil {
-		panic(err)
-	}
-	log.Infof("runInfo:%+v", runInfo)
+	fmt.Printf("%+v\n", result)
 }
 ```
+
 ### Crawl
 
 ```go
@@ -247,6 +238,92 @@ func main() {
 }
 ```
 
+### Proxy
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/proxies"
+)
+
+func main() {
+	client := scrapeless.New(scrapeless.WithProxy())
+	defer client.Close()
+
+	result, err := client.Proxy.Proxy(context.Background(), proxies.ProxyActor{
+		Country:         "US",
+		SessionDuration: 30,
+		SessionId:       "my-session",
+		Gateway:         "your-proxy-gateway:port",
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v\n", result)
+}
+```
+
+### AI Scraper
+
+Extract AI chat content in bulk to monitor brand mentions, compare answers, and analyze competitive intelligence from the latest models. Retrieve URLs, prompts, Markdown answers, citations, and more through one integration.
+
+Supported actors include `scraper.chatgpt`, `scraper.perplexity`, `scraper.copilot`, `scraper.gemini`, `scraper.aimode`, `scraper.overview`, `scraper.grok`, and `scraper.alexa`. The `input` JSON depends on the actor; see the [AI Scraper documentation](https://docs.scrapeless.com/en/llm-chat-scraper/quickstart/introduction/?utm_source=github&utm_medium=referral&utm_campaign=go_sdk_repo) for detailed parameters. The optional `webhook` JSON contains a callback `url`.
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/scrapeless-ai/sdk-go/scrapeless"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/aiscraper"
+)
+
+func main() {
+	client := scrapeless.New(scrapeless.WithAIScraper()) // Uses SCRAPELESS_API_KEY
+	defer client.Close()
+	ctx := context.Background()
+
+	task, err := client.AIScraper.CreateTask(ctx, aiscraper.TaskRequest{
+		Actor: "scraper.chatgpt",
+		Input: map[string]any{
+			"prompt":     "Most reliable proxy service for data extraction",
+			"country":    "US",
+			"web_search": true,
+		},
+		// Optional: Webhook: map[string]any{"url": "https://your-webhook.example.com"},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Created task:", string(task))
+
+	var created struct {
+		TaskID string `json:"task_id"`
+	}
+	if err := json.Unmarshal(task, &created); err != nil {
+		panic(err)
+	}
+	result, err := client.AIScraper.GetTaskResult(ctx, created.TaskID)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Task status and result:", string(result))
+	// If status is "running", call GetTaskResult again later.
+	// If status is "failed", message contains the failure reason.
+}
+```
+
+Both methods return the API JSON unchanged. Creation returns `task_id`, `status`, and, when available, `task_result`. Result retrieval returns `status`, `task_result` when available, and `message` on failure. Status is `success`, `failed`, or `running`; the SDK does not poll automatically.
+
+Responses are raw JSON bytes (`[]byte`), preserving every API field. Decode them with `encoding/json` as needed.
+
 ## 🔧 API Reference
 
 ### Available Services
@@ -255,11 +332,12 @@ The SDK provides the following services:
 
 - `Client.Browser` - Browser session management.
 - `Client.Scraping` - Web scraping and data extraction.
-- `Client.DeepSerp` - Search engine result extraction.
-- `Client.Universal` - Universal data extraction.
+- `Client.DeepSerp` - the Google Search API feature: search engine (Google SERP) result extraction.
+- `Client.Universal` - the Web Unlocker feature: universal data extraction.
 - `Client.Proxy` - Proxy management.
-- `Client.Actor` - Actor system for custom automation.
-- `Client.Storage` - Data storage solutions.
+- `Client.Profile` - Browser profile management.
+- `Client.Crawl` - Site crawling and page extraction.
+- `Client.AIScraper` - AI chat task creation and result retrieval (enable with `WithAIScraper()`).
 - `Client.Server` - HTTP service.
 - `Client.Router` - Route access.
 - `Client.Captcha` - Captcha processing.
@@ -268,16 +346,14 @@ The SDK provides the following services:
 
 Check the `example` directory for complete usage examples:
 
-- [Actor System](./example/actor_service/actor_service.go)
-- [SERP Scraping](./example/deepserp/deepserp.go)
-- [Web Scraping](./example/scraping/scraping.go)
+- [Google Search API](./example/deepserp/deepserp.go)
+- [Scraping API](./example/scraping/scraping.go)
+- [Browser Profile](./example/profile/profile.go)
+- [Web Unlocker](./example/universal/universal.go)
+- [AI Scraper](./example/ai_scraper/ai_scraper.go)
 - [Browser Operation Example](./example/browser/browser.go)
 - [Captcha Recognition Example](./example/captcha/captcha.go)
 - [Proxy Management Example](./example/proxy/proxy.go)
-- [Storage Dataset Usage Example](./example/storage_dataset/storage_dataset.go)
-- [Storage KV Usage Example](./example/storage_kv/storage_kv.go)
-- [Storage Object Usage Example](./example/storage_object/storage_object.go)
-- [Storage Queue Usage Example](./example/storage_queue/storage_queue.go)
 - [Route Call](./example/router/router.go)
 - [HTTP Service](./example/httpserver/httpserver.go)
 - [Crawl Usage Example](./example/crawl/crawl.go)
@@ -290,9 +366,9 @@ All forms of contributions are welcome! For detailed information on how to submi
 
 ```bash
 git clone https://github.com/scrapeless-ai/sdk-go.git
-cd scrapeless-actor-sdk-go
+cd sdk-go
 go mod tidy
-go run ./example/actor/actor.go
+go run ./example/ai_scraper/ai_scraper.go
 ```
 
 For more information on project structure, best practices, etc., please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -303,7 +379,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📖 **Documentation**: [https://docs.scrapeless.com](https://docs.scrapeless.com)
+- 📖 **Documentation**: [https://docs.scrapeless.com](https://docs.scrapeless.com?utm_source=github&utm_medium=referral&utm_campaign=go_sdk_repo)
 - 💬 **Community**: [Join our Discord](https://backend.scrapeless.com/app/api/v1/public/links/discord)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/scrapeless-ai/scrapeless-sdk-node/issues)
 - 📧 **Email**: [support@scrapeless.com](mailto:support@scrapeless.com)
@@ -317,10 +393,14 @@ Scrapeless is a powerful web scraping and browser automation platform that helps
 - Browser automation capabilities.
 - Enterprise-level reliability and support.
 
-Visit [scrapeless.com](https://scrapeless.com) to learn more and get started.
+Visit [scrapeless.com](https://scrapeless.com?utm_source=github&utm_medium=referral&utm_campaign=go_sdk_repo) to learn more and get started.
 
 ---
 
 Made with ❤️ by the Scrapeless team
 
-        
+## Related Projects
+
+- [Scrapeless Python SDK](https://github.com/scrapeless-ai/sdk-python)
+- [Scrapeless Node.js SDK](https://github.com/scrapeless-ai/sdk-node)
+- [Scrapeless Go SDK](https://github.com/scrapeless-ai/sdk-go)
