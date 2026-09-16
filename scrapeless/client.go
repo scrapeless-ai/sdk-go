@@ -2,6 +2,7 @@ package scrapeless
 
 import (
 	"github.com/scrapeless-ai/sdk-go/scrapeless/services/actor"
+	"github.com/scrapeless-ai/sdk-go/scrapeless/services/aiscraper"
 	"github.com/scrapeless-ai/sdk-go/scrapeless/services/browser"
 	"github.com/scrapeless-ai/sdk-go/scrapeless/services/captcha"
 	"github.com/scrapeless-ai/sdk-go/scrapeless/services/crawl"
@@ -28,6 +29,7 @@ type Client struct {
 	Actor     *actor.ActorService
 	Crawl     *crawl.Crawl
 	Profile   *profile.Profile
+	AIScraper *aiscraper.AIScraper
 	CloseFun  []func() error
 }
 
@@ -259,4 +261,16 @@ func WithProfile(tp ...string) Option {
 	return &ProfileOption{
 		tp: tp[0],
 	}
+}
+
+type AIScraperOption struct{}
+
+func (o *AIScraperOption) Apply(c *Client) {
+	c.AIScraper = aiscraper.New()
+	c.CloseFun = append(c.CloseFun, c.AIScraper.Close)
+}
+
+// WithAIScraper enables AI chat task creation and result retrieval.
+func WithAIScraper() Option {
+	return &AIScraperOption{}
 }
